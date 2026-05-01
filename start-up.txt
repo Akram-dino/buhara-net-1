@@ -1,0 +1,28 @@
+mkdir buhara_teanet
+
+python -m venv venv
+
+
+
+---------open folder-----------
+cd buhara_teanet
+
+---------activate environment-----------
+venv\Scripts\activate
+
+---------start server-----------
+py manage.py runserver
+
+fieldworker
+username:testu1
+pwd:buhara2026
+
+agricultural expert
+username:testu2
+pwd:buhara2026
+
+admin
+username: testu4
+pwd:buhara2026
+
+
