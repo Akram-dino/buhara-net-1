@@ -26,3 +26,4 @@ username: testu4
 pwd:buhara2026
 
 
+postgresql://buhara_teanet_db_user:3LofjY7cAIWtYkQPFk5wt54Vn3el62je@dpg-d7q8131j2pic73fif0sg-a/buhara_teanet_db
