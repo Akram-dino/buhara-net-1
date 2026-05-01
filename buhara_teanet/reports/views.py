@@ -1,0 +1,406 @@
+# from io import BytesIO
+# from django.utils.timezone import now
+# from django.contrib.auth.decorators import login_required
+# from django.http import FileResponse, HttpResponse
+# from django.shortcuts import get_object_or_404
+# from reportlab.lib.pagesizes import A4
+# from reportlab.pdfgen import canvas
+
+# from accounts.decorators import role_required
+# from submissions.models import Submission
+
+
+from io import BytesIO
+from django.utils.timezone import now
+from django.http import FileResponse
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count
+
+from io import BytesIO
+
+from django.contrib.auth.decorators import login_required
+from django.http import FileResponse, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.utils.timezone import now
+from reportlab.pdfgen import canvas
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from django.shortcuts import get_object_or_404
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+)
+
+from accounts.decorators import role_required
+from submissions.models import Submission
+from detections.models import DetectionResult
+
+
+
+
+
+def split_text(text, max_chars):
+    words = text.split()
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = f"{current_line} {word}".strip()
+        if len(test_line) <= max_chars:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+
+    if current_line:
+        lines.append(current_line)
+
+    return lines
+
+
+def draw_section_title(pdf, y, title):
+    pdf.setFont("Helvetica-Bold", 13)
+    pdf.drawString(50, y, title)
+    return y - 20
+
+
+def draw_text_block(pdf, y, text, indent=50):
+    pdf.setFont("Helvetica", 11)
+    for line in split_text(text, 85):
+        pdf.drawString(indent, y, line)
+        y -= 15
+    return y
+
+
+@login_required
+@role_required(['admin', 'reviewer', 'worker', 'manager'])
+def submission_report_pdf_view(request, pk):
+    submission = get_object_or_404(Submission, pk=pk)
+
+    if request.user.role in ['worker', 'manager'] and submission.submitted_by != request.user:
+        return HttpResponse("Not allowed", status=403)
+
+    detection_result = getattr(submission, 'detection_result', None)
+    review = getattr(submission, 'review', None)
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    y = height - 50
+
+    # TITLE
+    pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(50, y, "Buhara TeaNet")
+    y -= 20
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(50, y, "Tea Disease Detection Report")
+    y -= 30
+
+    pdf.setFont("Helvetica", 10)
+    pdf.drawString(50, y, f"Generated on: {now().strftime('%Y-%m-%d %H:%M')}")
+    y -= 30
+
+    # EXECUTIVE SUMMARY
+    y = draw_section_title(pdf, y, "Executive Summary")
+    y = draw_text_block(pdf, y,
+        "This report provides a detailed analysis of a submitted tea leaf sample. "
+        "It includes AI-based disease detection results and expert validation outcomes "
+        "to support accurate agricultural decision-making."
+    )
+    y -= 10
+
+    # SUBMISSION DETAILS
+    y = draw_section_title(pdf, y, "Submission Details")
+    pdf.setFont("Helvetica", 11)
+    pdf.drawString(50, y, f"Case ID: CASE-{submission.id:04d}")
+    y -= 15
+    pdf.drawString(50, y, f"Submitted By: {submission.submitted_by.username}")
+    y -= 15
+    pdf.drawString(50, y, f"Location: {submission.location or 'Not specified'}")
+    y -= 15
+    pdf.drawString(50, y, f"Status: {submission.get_status_display()}")
+    y -= 20
+
+    # FIELD NOTES
+    y = draw_section_title(pdf, y, "Field Notes")
+    notes = submission.notes or "No notes provided."
+    y = draw_text_block(pdf, y, notes)
+    y -= 10
+
+    # AI RESULT
+    if detection_result:
+        y = draw_section_title(pdf, y, "AI Diagnosis Result")
+
+        confidence = detection_result.confidence
+        confidence_text = "Not available"
+
+        if confidence is not None:
+            confidence_percent = round(confidence * 100, 2)
+            confidence_text = f"{confidence_percent}%"
+
+        # APPLY 32% RULE
+        if confidence is not None and confidence < 0.32:
+            disease = "Uncertain Prediction"
+            recommendation = "Low-confidence result. Expert review required."
+        else:
+            disease = detection_result.disease_name or "Not available"
+            recommendation = detection_result.recommendation or "No recommendation provided."
+
+        pdf.drawString(50, y, f"Disease: {disease}")
+        y -= 15
+        pdf.drawString(50, y, f"Confidence: {confidence_text}")
+        y -= 15
+
+        y -= 5
+        y = draw_text_block(pdf, y, f"Recommendation: {recommendation}", 50)
+        y -= 10
+
+    # REVIEW
+    if review:
+        y = draw_section_title(pdf, y, "Expert Review")
+
+        pdf.drawString(50, y, f"Reviewer: {review.reviewer.username}")
+        y -= 15
+        pdf.drawString(50, y, f"Status: {review.get_review_status_display()}")
+        y -= 15
+        pdf.drawString(50, y, f"Final Disease: {review.final_disease_name}")
+        y -= 15
+
+        y = draw_text_block(pdf, y, f"Final Recommendation: {review.final_recommendation}")
+        y -= 10
+
+        y = draw_text_block(pdf, y, f"Expert Notes: {review.expert_notes or 'None'}")
+
+    # FOOTER
+    pdf.setFont("Helvetica-Oblique", 9)
+    pdf.drawString(50, 30, "Generated by Buhara TeaNet System")
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f"submission_report_{submission.id}.pdf")
+
+# from io import BytesIO
+
+# from django.contrib.auth.decorators import login_required
+# from django.http import FileResponse
+# from reportlab.lib.pagesizes import A4
+# from reportlab.pdfgen import canvas
+from django.db.models import Count
+
+# from accounts.decorators import role_required
+# from submissions.models import Submission
+from detections.models import DetectionResult
+
+
+# @login_required
+# @role_required(['admin', 'reviewer'])
+from reportlab.lib import colors
+
+@login_required
+@role_required(['admin', 'reviewer'])
+def analytics_report_pdf_view(request):
+    total_submissions = Submission.objects.count()
+    pending_ai = Submission.objects.filter(status='pending_ai').count()
+    pending_review = Submission.objects.filter(status='pending_review').count()
+    approved = Submission.objects.filter(status='approved').count()
+    reviewed = Submission.objects.filter(status='reviewed').count()
+    rejected = Submission.objects.filter(status='rejected').count()
+
+    disease_counts = list(
+        DetectionResult.objects
+        .values('disease_name')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=1.5 * cm,
+        leftMargin=1.5 * cm,
+        topMargin=1.2 * cm,
+        bottomMargin=1.2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        "TitleStyle",
+        parent=styles["Title"],
+        textColor=colors.HexColor("#003023"),
+        fontSize=22,
+        leading=26,
+        spaceAfter=6,
+    )
+
+    subtitle_style = ParagraphStyle(
+        "SubtitleStyle",
+        parent=styles["Normal"],
+        textColor=colors.HexColor("#4B5563"),
+        fontSize=10,
+        leading=14,
+        spaceAfter=18,
+    )
+
+    heading_style = ParagraphStyle(
+        "HeadingStyle",
+        parent=styles["Heading2"],
+        textColor=colors.HexColor("#003023"),
+        fontSize=14,
+        leading=18,
+        spaceBefore=12,
+        spaceAfter=10,
+    )
+
+    normal_style = ParagraphStyle(
+        "NormalStyle",
+        parent=styles["Normal"],
+        fontSize=10,
+        leading=15,
+        textColor=colors.HexColor("#111827"),
+    )
+
+    white_text = ParagraphStyle(
+    "WhiteText",
+    parent=styles["Normal"],
+    textColor=colors.white,
+    fontSize=10,
+    leading=14,
+)
+
+    story = []
+
+    # HEADER
+    header_table = Table(
+        [[
+            # Paragraph("<b>Buhara TeaNet</b><br/>Tea Disease Detection & Advisory System", normal_style),
+            # Paragraph(f"<b>Analytics Report</b><br/>Generated: {now().strftime('%Y-%m-%d %H:%M')}", normal_style),
+            Paragraph(
+            "<b>Buhara TeaNet</b><br/>Tea Disease Detection & Advisory System",
+            white_text
+        ),
+        Paragraph(
+            f"<b>Analytics Report</b><br/>Generated: {now().strftime('%Y-%m-%d %H:%M')}",
+            white_text
+        ),
+        ]],
+        colWidths=[10.5 * cm, 6 * cm],
+    )
+    header_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#003023")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#003023")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 18))
+
+    story.append(Paragraph("Buhara TeaNet Analytics Report", title_style))
+    story.append(Paragraph(
+        "This report summarizes tea disease submissions, AI diagnosis activity, review progress, "
+        "and disease distribution across the Buhara TeaNet platform.",
+        subtitle_style
+    ))
+
+    # SUMMARY CARDS
+    summary_data = [
+        ["Total", "Pending AI", "Pending Review"],
+        [str(total_submissions), str(pending_ai), str(pending_review)],
+        ["Approved", "Reviewed", "Rejected"],
+        [str(approved), str(reviewed), str(rejected)],
+    ]
+
+    summary_table = Table(summary_data, colWidths=[5.5 * cm, 5.5 * cm, 5.5 * cm])
+    summary_table.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.6, colors.HexColor("#DCEFE3")),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F6FEF9")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#003023")),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 11),
+        ("FONTSIZE", (0, 1), (-1, 1), 20),
+        ("FONTSIZE", (0, 3), (-1, 3), 20),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+    ]))
+    story.append(summary_table)
+    story.append(Spacer(1, 18))
+
+    # EXECUTIVE SUMMARY
+    story.append(Paragraph("Executive Summary", heading_style))
+    story.append(Paragraph(
+        "The analytics report provides a concise overview of submitted tea leaf cases and their current "
+        "workflow status. It supports monitoring of AI diagnosis performance and expert validation activity.",
+        normal_style
+    ))
+
+    story.append(Spacer(1, 10))
+
+    # DISEASE DISTRIBUTION
+    story.append(Paragraph("Disease Distribution", heading_style))
+
+    disease_table_data = [["Disease Name", "Detected Cases"]]
+    if disease_counts:
+        for item in disease_counts:
+            disease_table_data.append([
+                item["disease_name"] or "Unknown",
+                str(item["total"])
+            ])
+    else:
+        disease_table_data.append(["No disease data available", "-"])
+
+    disease_table = Table(disease_table_data, colWidths=[12 * cm, 4.5 * cm])
+    disease_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#003023")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DCEFE3")),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F6FEF9")]),
+        ("ALIGN", (1, 1), (1, -1), "CENTER"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    story.append(disease_table)
+
+    story.append(Spacer(1, 18))
+
+    # AI EXPLANATION
+    story.append(Paragraph("AI Model Interpretation Note", heading_style))
+    story.append(Paragraph(
+        "The AI model classifies uploaded tea leaf images by comparing them against trained disease categories. "
+        "Predictions below the accepted confidence threshold should be treated as uncertain and forwarded for "
+        "expert validation before field action is taken.",
+        normal_style
+    ))
+
+    story.append(Spacer(1, 20))
+
+    footer = Paragraph(
+        "Generated by Buhara TeaNet System - AI-assisted tea disease monitoring platform.",
+        ParagraphStyle(
+            "Footer",
+            parent=styles["Normal"],
+            fontSize=8,
+            textColor=colors.HexColor("#6B7280"),
+            alignment=1,
+        )
+    )
+    story.append(footer)
+
+    doc.build(story)
+
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="analytics_report.pdf")

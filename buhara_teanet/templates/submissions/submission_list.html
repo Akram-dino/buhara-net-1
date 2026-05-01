@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}My Submissions | Buhara TeaNet{% endblock %}
+{% block page_title %}My Submissions{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submission Records</p>
+                <h2 class="text-2xl font-bold text-darkgreen">My Tea Leaf Cases</h2>
+                <p class="text-sm text-muted mt-2 max-w-2xl">
+                    View all submitted tea disease cases, monitor their progress through AI analysis and expert review,
+                    and manage records where editing or deletion is still allowed.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'submission_create' %}"
+                   class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                    <i class="fa-solid fa-plus"></i>
+                    New Submission
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- QUICK SUMMARY -->
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Total Records</p>
+            <h3 class="text-3xl font-bold">{{ submissions|length }}</h3>
+            <p class="text-sm text-muted mt-2">Submission entries shown</p>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending AI</p>
+            <h3 class="text-3xl font-bold text-amber-600">
+                {{ pending_ai_count|default:0 }}
+            </h3>
+            <p class="text-sm text-muted mt-2">Awaiting AI processing</p>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending Review</p>
+            <h3 class="text-3xl font-bold text-blue-600">
+                {{ pending_review_count|default:0 }}
+            </h3>
+            <p class="text-sm text-muted mt-2">Awaiting expert validation</p>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-green-600"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Approved</p>
+            <h3 class="text-3xl font-bold text-green-700">
+                {{ approved_count|default:0 }}
+            </h3>
+            <p class="text-sm text-muted mt-2">Validated submissions</p>
+        </div>
+    </section>
+
+    <!-- SUBMISSIONS LIST -->
+    <section class="bg-white border border-borderline shadow-soft">
+        <div class="border-b border-borderline px-6 py-5">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submission Table</p>
+            <h3 class="text-lg font-bold text-darkgreen">Recent and Existing Cases</h3>
+        </div>
+
+        {% if submissions %}
+            <div class="divide-y divide-borderline">
+                {% for submission in submissions %}
+                    <div class="p-6 hover:bg-lightbg transition">
+                        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+
+                            <!-- LEFT -->
+                            <div class="flex gap-4 min-w-0">
+                                <div class="w-24 h-24 border border-borderline bg-lightbg overflow-hidden shrink-0">
+                                    {% if submission.image %}
+                                        <img src="{{ submission.image.url }}" alt="Submission image" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-muted">
+                                            <i class="fa-regular fa-image text-2xl"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-3 mb-2">
+                                        <h4 class="text-xl font-bold text-darkgreen">
+                                            Submission CASE-{{ submission.id|stringformat:"04d" }}
+                                        </h4>
+
+                                        {% if submission.status == 'pending_ai' %}
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-amber-100 text-amber-700">
+                                                <span class="w-2 h-2 bg-amber-500"></span>
+                                                Pending AI
+                                            </span>
+                                        {% elif submission.status == 'pending_review' %}
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-blue-100 text-blue-700">
+                                                <span class="w-2 h-2 bg-blue-500"></span>
+                                                Pending Review
+                                            </span>
+                                        {% elif submission.status == 'approved' %}
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-green-100 text-green-700">
+                                                <span class="w-2 h-2 bg-green-600"></span>
+                                                Approved
+                                            </span>
+                                        {% elif submission.status == 'reviewed' %}
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-indigo-100 text-indigo-700">
+                                                <span class="w-2 h-2 bg-indigo-500"></span>
+                                                Reviewed
+                                            </span>
+                                        {% elif submission.status == 'rejected' %}
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-red-100 text-red-700">
+                                                <span class="w-2 h-2 bg-red-500"></span>
+                                                Rejected
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-gray-100 text-gray-700">
+                                                <span class="w-2 h-2 bg-gray-500"></span>
+                                                {{ submission.get_status_display }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 text-sm">
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Date</p>
+                                            <p class="font-medium">{{ submission.created_at|date:"M d, Y H:i" }}</p>
+                                        </div>
+
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Location</p>
+                                            <p class="font-medium">{{ submission.location|default:"Not specified" }}</p>
+                                        </div>
+
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Submitted By</p>
+                                            <p class="font-medium">{{ submission.submitted_by.username }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Notes</p>
+                                        <p class="text-sm text-muted line-clamp-2">
+                                            {{ submission.notes|default:"No notes provided." }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT ACTIONS -->
+                            <div class="xl:w-[280px]">
+                                <div class="border border-borderline bg-white">
+                                    <div class="px-4 py-3 border-b border-borderline">
+                                        <p class="text-xs uppercase tracking-[0.2em] text-muted">Actions</p>
+                                    </div>
+
+                                    <div class="p-4 flex flex-wrap gap-3">
+                                        <a href="{% url 'submission_detail' submission.pk %}"
+                                           class="inline-flex items-center gap-2 border border-primary text-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide hover:bg-primary hover:text-darkgreen transition">
+                                            <i class="fa-solid fa-eye"></i>
+                                            View
+                                        </a>
+
+                                        <a href="{% url 'submission_report_pdf' submission.pk %}"
+                                           class="inline-flex items-center gap-2 border border-borderline text-darkgreen px-4 py-2 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                            Report
+                                        </a>
+
+                                        {% if submission.status != 'approved' and submission.status != 'reviewed' and submission.status != 'rejected' %}
+                                            <a href="{% url 'submission_update' submission.pk %}"
+                                               class="inline-flex items-center gap-2 border border-blue-500 text-blue-600 px-4 py-2 text-sm font-semibold uppercase tracking-wide hover:bg-blue-500 hover:text-white transition">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                                Edit
+                                            </a>
+                                        {% endif %}
+
+                                        {% if submission.status == 'pending_ai' or submission.status == 'pending_review' %}
+                                            <button
+                                                type="button"
+                                                class="inline-flex items-center gap-2 border border-red-500 text-red-600 px-4 py-2 text-sm font-semibold uppercase tracking-wide hover:bg-red-500 hover:text-white transition"
+                                                data-delete-url="{% url 'submission_delete' submission.pk %}"
+                                                data-label="Submission #{{ submission.id }}"
+                                                onclick="openDeleteModal(this.dataset.deleteUrl, this.dataset.label)">
+                                                <i class="fa-solid fa-trash"></i>
+                                                Delete
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-10 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 border border-borderline bg-lightbg flex items-center justify-center text-muted">
+                    <i class="fa-regular fa-folder-open text-2xl"></i>
+                </div>
+                <h4 class="text-lg font-bold text-darkgreen mb-2">No submissions yet</h4>
+                <p class="text-sm text-muted mb-6">
+                    You have not created any tea disease submissions yet.
+                </p>
+                <a href="{% url 'submission_create' %}"
+                   class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide">
+                    <i class="fa-solid fa-plus"></i>
+                    Create First Submission
+                </a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white border border-borderline shadow-soft w-full max-w-md">
+        <div class="bg-darkgreen text-white px-6 py-4 flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-white/50 mb-1">Delete Action</p>
+                <h3 class="text-lg font-bold">Delete Submission</h3>
+            </div>
+            <button type="button" onclick="closeDeleteModal()" class="text-white/70 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="p-6">
+            <p class="text-sm text-muted leading-6">
+                Are you sure you want to delete
+                <span id="deleteSubmissionLabel" class="font-semibold text-darkgreen"></span>?
+                This action cannot be undone.
+            </p>
+
+            <form id="deleteForm" method="post" class="mt-6">
+                {% csrf_token %}
+                <input type="hidden" name="next" id="deleteNext" value="{{ request.get_full_path }}">
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button type="button"
+                            onclick="closeDeleteModal()"
+                            class="inline-flex items-center gap-2 border border-borderline px-5 py-3 text-sm font-semibold uppercase tracking-wide text-darkgreen">
+                        <i class="fa-solid fa-ban"></i>
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-3 text-sm font-semibold uppercase tracking-wide">
+                        <i class="fa-solid fa-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openDeleteModal(deleteUrl, label) {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        const text = document.getElementById('deleteSubmissionLabel');
+
+        form.action = deleteUrl;
+        text.textContent = label;
+        document.getElementById('deleteNext').value = window.location.pathname + window.location.search;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    window.addEventListener('click', function (e) {
+        const modal = document.getElementById('deleteModal');
+        if (e.target === modal) {
+            closeDeleteModal();
+        }
+    });
+</script>
+{% endblock %}

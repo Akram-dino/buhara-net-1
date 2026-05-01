@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Submission | Buhara TeaNet{% endblock %}
+{% block page_title %}Review Submission{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Expert Validation</p>
+                <h2 class="text-2xl font-bold text-darkgreen">Review Submission #{{ submission.id }}</h2>
+                <p class="text-sm text-muted mt-2">
+                    Submitted by <span class="font-semibold">{{ submission.submitted_by.username }}</span>
+                    on {{ submission.created_at|date:"M d, Y H:i" }}
+                </p>
+            </div>
+
+            <a href="{% url 'reviewer_submission_list' %}"
+               class="inline-flex items-center gap-2 border border-borderline px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+            </a>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- Left content -->
+        <div class="xl:col-span-2 space-y-6">
+
+            <!-- Submitted Image -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submitted Evidence</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Tea Leaf Image</h3>
+                </div>
+
+                <div class="p-6">
+                    {% if submission.image %}
+                        <div class="border border-borderline bg-lightbg overflow-hidden">
+                            <img src="{{ submission.image.url }}"
+                                 alt="Tea leaf image"
+                                 class="w-full max-h-[520px] object-contain bg-white">
+                        </div>
+                    {% else %}
+                        <div class="border border-borderline bg-lightbg p-10 text-center text-muted">
+                            <i class="fa-regular fa-image text-4xl mb-4"></i>
+                            <p class="text-sm">No image uploaded</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Reviewer Form -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Reviewer Decision</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Expert Validation Form</h3>
+                </div>
+
+                <form method="post" class="p-6 space-y-6">
+                    {% csrf_token %}
+
+                    <div>
+                        <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Final Disease Name
+                        </label>
+                        {{ form.final_disease_name }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Final Recommendation
+                        </label>
+                        {{ form.final_recommendation }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Expert Notes
+                        </label>
+                        {{ form.expert_notes }}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Review Status
+                        </label>
+                        {{ form.review_status }}
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 bg-primary text-darkgreen px-6 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                            <i class="fa-solid fa-check"></i>
+                            Save Review
+                        </button>
+
+                        <a href="{% url 'reviewer_submission_list' %}"
+                           class="inline-flex items-center gap-2 border border-borderline px-6 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                            <i class="fa-solid fa-xmark"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <!-- Right sidebar -->
+        <aside class="space-y-6">
+
+            <!-- Field Notes -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Field Submission</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Case Notes</h3>
+                </div>
+
+                <div class="p-6 space-y-5 text-sm">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Location / Block</p>
+                        <p class="font-semibold text-darkgreen">{{ submission.location|default:"Not specified" }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Worker Notes</p>
+                        <p class="text-darkgreen leading-6">
+                            {{ submission.notes|default:"No notes provided" }}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Result -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">AI Output</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Model Result</h3>
+                </div>
+
+                <div class="p-6">
+                    {% if detection_result %}
+                        <div class="space-y-5 text-sm">
+                            <div class="border border-borderline bg-lightbg p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">AI Disease Name</p>
+                                <p class="text-xl font-bold text-darkgreen">
+                                    {{ detection_result.disease_name|default:"Not available" }}
+                                </p>
+                            </div>
+
+                            <div class="border border-borderline bg-lightbg p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Confidence</p>
+
+                                {% if detection_result.has_confidence %}
+                                    <div class="space-y-3">
+                                        <div class="w-full bg-gray-200 h-3 overflow-hidden">
+                                            <div class="h-3 bg-primary"style="width: {{ detection_result.confidence_percent }}%;">
+                                            </div>
+                                        </div>
+                                        <p class="text-lg font-bold text-darkgreen">
+                                            {{ detection_result.confidence_percent }}%
+                                        </p>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">Not available</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">AI Recommendation</p>
+                                <p class="leading-6 text-darkgreen">
+                                    {{ detection_result.recommendation|default:"Not available" }}
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="border border-borderline bg-lightbg p-6 text-center">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl text-muted mb-3"></i>
+                            <p class="text-sm text-muted">No AI result found for this submission.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            {% if review %}
+            <!-- Existing Review -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Existing Review</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Review Record</h3>
+                </div>
+
+                <div class="p-6 space-y-4 text-sm">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Status</p>
+                        <p class="font-semibold text-darkgreen">{{ review.get_review_status_display }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Reviewed By</p>
+                        <p class="font-semibold text-darkgreen">{{ review.reviewer.username }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Reviewed At</p>
+                        <p class="font-semibold text-darkgreen">{{ review.reviewed_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+        </aside>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,503 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Edit Submission{% else %}New Submission{% endif %} | Buhara TeaNet{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Submission{% else %}New Submission{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Field Submission</p>
+                <h2 class="text-2xl font-bold text-darkgreen">
+                    {% if is_edit %}Update Tea Leaf Submission{% else %}Upload Tea Leaf for Diagnosis{% endif %}
+                </h2>
+                <p class="text-sm text-muted mt-2 max-w-2xl">
+                    {% if is_edit %}
+                        Update the image or field observations below. The system will re-run AI analysis and send the case back through the review workflow.
+                    {% else %}
+                        Capture or upload a clear tea leaf image, add field observations, and submit it for AI-powered disease diagnosis and expert validation.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'worker_dashboard' %}"
+                   class="inline-flex items-center gap-2 border border-borderline bg-white px-5 py-3 text-sm font-semibold uppercase tracking-wide text-darkgreen hover:border-primary transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FORM + SIDE PANEL -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- MAIN FORM -->
+        <section class="xl:col-span-2 bg-white border border-borderline shadow-soft">
+            <div class="border-b border-borderline px-6 py-5">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submission Form</p>
+                <h3 class="text-lg font-bold text-darkgreen">Case Details</h3>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="p-6 space-y-8" id="submissionForm">
+                {% csrf_token %}
+
+                <!-- IMAGE SECTION -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="id_image" class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Tea Leaf Image
+                        </label>
+                        <p class="text-sm text-muted">
+                            Upload a clear image of the affected tea leaf or use the camera to capture one directly.
+                        </p>
+                    </div>
+
+                    <div class="border border-dashed border-borderline bg-lightbg p-5">
+                        <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+                            <div class="flex-1 space-y-4">
+                                <input
+                                    type="file"
+                                    name="image"
+                                    id="id_image"
+                                    accept="image/*"
+                                    class="w-full border border-borderline bg-white px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                                >
+
+                                <div class="flex flex-wrap gap-3">
+                                    <button
+                                        type="button"
+                                        id="openCameraBtn"
+                                        class="inline-flex items-center gap-2 bg-darkgreen text-white px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-primary hover:text-darkgreen transition"
+                                    >
+                                        <i class="fa-solid fa-camera"></i>
+                                        Open Camera
+                                    </button>
+
+                                    <div class="inline-flex items-center gap-2 border border-borderline bg-white px-4 py-3 text-sm text-muted">
+                                        <i class="fa-solid fa-circle-info text-primary"></i>
+                                        Use a sharp, well-lit image for better AI results
+                                    </div>
+                                </div>
+
+                                {% if form.image.errors %}
+                                    <div class="text-sm text-red-600">
+                                        {{ form.image.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="w-full lg:w-64">
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3 font-semibold">Preview</p>
+                                <div class="aspect-square bg-white border border-borderline flex items-center justify-center overflow-hidden">
+                                    <img id="preview" class="hidden w-full h-full object-cover" alt="Preview">
+                                    <div id="previewPlaceholder" class="text-center text-muted px-4">
+                                        <i class="fa-regular fa-image text-3xl mb-3"></i>
+                                        <p class="text-sm">No image selected</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOCATION -->
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Capture Location
+                        </label>
+                        <p class="text-sm text-muted">
+                            The system will detect your current location automatically when you submit this case.
+                        </p>
+                    </div>
+                
+                    <div class="border border-borderline bg-lightbg p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="w-10 h-10 bg-white border border-borderline flex items-center justify-center text-primary shrink-0">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </span>
+                            <div class="flex-1">
+                                <p class="font-semibold text-darkgreen mb-1">Detected Location Status</p>
+                                <p id="locationStatus" class="text-sm text-muted">
+                                    Waiting to capture your current location...
+                                </p>
+                                <p id="locationCoords" class="text-xs text-muted mt-2 hidden"></p>
+                                
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3 font-semibold">Map Preview</p>
+                            <div id="locationMap" class="hidden w-full h-72 border border-borderline"></div>
+                        </div>
+                    </div>
+                
+                    {{ form.latitude }}
+                    {{ form.longitude }}
+                    {{ form.location }}
+                </div>
+
+                <!-- NOTES -->
+                <div class="space-y-3">
+                    <div>
+                        <label for="id_notes" class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            Notes / Observations
+                        </label>
+                        <p class="text-sm text-muted">
+                            Describe visible symptoms such as color changes, spots, drying, curling, or unusual patterns on the leaf.
+                        </p>
+                    </div>
+
+                    <div>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="mt-2 text-sm text-red-600">
+                                {{ form.notes.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="pt-2 flex flex-wrap gap-3">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 bg-primary text-darkgreen px-6 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        {% if is_edit %}Update Submission{% else %}Submit for Analysis{% endif %}
+                    </button>
+
+                    <a href="{% url 'worker_dashboard' %}"
+                       class="inline-flex items-center gap-2 border border-borderline bg-white px-6 py-3 text-sm font-semibold uppercase tracking-wide text-darkgreen hover:border-primary transition">
+                        <i class="fa-solid fa-xmark"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </section>
+
+        <!-- SIDE PANEL -->
+        <aside class="space-y-6">
+            <section class="bg-white border border-borderline shadow-soft p-6">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submission Guide</p>
+                <h3 class="text-lg font-bold text-darkgreen mb-5">Best Practices</h3>
+
+                <div class="space-y-4 text-sm">
+                    <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                        <span class="w-8 h-8 bg-lightbg border border-borderline flex items-center justify-center text-primary shrink-0">
+                            <i class="fa-solid fa-camera"></i>
+                        </span>
+                        <div>
+                            <p class="font-semibold">Clear Image</p>
+                            <p class="text-muted">Capture the leaf in good lighting and avoid blurred shots.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                        <span class="w-8 h-8 bg-lightbg border border-borderline flex items-center justify-center text-primary shrink-0">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </span>
+                        <div>
+                            <p class="font-semibold">Accurate Location</p>
+                            <p class="text-muted">Add the correct block or field section for traceability.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-lightbg border border-borderline flex items-center justify-center text-primary shrink-0">
+                            <i class="fa-solid fa-note-sticky"></i>
+                        </span>
+                        <div>
+                            <p class="font-semibold">Useful Notes</p>
+                            <p class="text-muted">Mention symptoms you observed to support AI and reviewer interpretation.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white border border-borderline shadow-soft p-6">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Workflow</p>
+                <h3 class="text-lg font-bold text-darkgreen mb-5">What Happens Next</h3>
+
+                <div class="space-y-4 text-sm">
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-primary text-darkgreen flex items-center justify-center font-bold shrink-0">1</span>
+                        <div>
+                            <p class="font-semibold">Image Upload</p>
+                            <p class="text-muted">Your image and notes are submitted to the system.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-primary text-darkgreen flex items-center justify-center font-bold shrink-0">2</span>
+                        <div>
+                            <p class="font-semibold">AI Diagnosis</p>
+                            <p class="text-muted">The Roboflow model analyzes the image and predicts a disease.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-primary text-darkgreen flex items-center justify-center font-bold shrink-0">3</span>
+                        <div>
+                            <p class="font-semibold">Expert Review</p>
+                            <p class="text-muted">A reviewer validates the result before the case is finalized.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div id="cameraModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white w-full max-w-3xl border border-borderline shadow-soft">
+        <div class="bg-darkgreen text-white px-6 py-4 flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-white/50 mb-1">Live Capture</p>
+                <h3 class="text-lg font-bold">Capture Tea Leaf Image</h3>
+            </div>
+            <button type="button" id="closeCameraBtn" class="text-white/70 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-5">
+            <video id="camera" autoplay playsinline class="w-full border border-borderline bg-black min-h-[320px] object-cover"></video>
+            <canvas id="snapshotCanvas" class="hidden"></canvas>
+
+            <div class="flex flex-wrap gap-3">
+                <button type="button" id="captureBtn"
+                        class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide">
+                    <i class="fa-solid fa-camera"></i>
+                    Capture
+                </button>
+
+                <button type="button" id="retakeBtn"
+                        class="inline-flex items-center gap-2 border border-borderline px-5 py-3 text-sm font-semibold uppercase tracking-wide hidden">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    Retake
+                </button>
+
+                <button type="button" id="usePhotoBtn"
+                        class="inline-flex items-center gap-2 bg-darkgreen text-white px-5 py-3 text-sm font-semibold uppercase tracking-wide hidden">
+                    <i class="fa-solid fa-check"></i>
+                    Use Photo
+                </button>
+            </div>
+
+            <img id="capturedPreview" class="hidden w-full border border-borderline" alt="Captured preview">
+        </div>
+    </div>
+</div>
+
+<!-- LOADING MODAL -->
+<div id="loadingModal" class="hidden fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center">
+        <div class="bg-white border border-borderline shadow-soft px-8 py-8 text-center max-w-md w-full">
+        <div class="w-14 h-14 mx-auto mb-4 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-lg font-semibold text-darkgreen">Analyzing Image...</p>
+        <p class="text-sm text-muted mt-2">Please wait while the AI processes your submission.</p>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+
+
+    const imageInput = document.getElementById('id_image');
+    const preview = document.getElementById('preview');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    const closeCameraBtn = document.getElementById('closeCameraBtn');
+    const cameraModal = document.getElementById('cameraModal');
+
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('snapshotCanvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const retakeBtn = document.getElementById('retakeBtn');
+    const usePhotoBtn = document.getElementById('usePhotoBtn');
+    const capturedPreview = document.getElementById('capturedPreview');
+
+    const submissionForm = document.getElementById('submissionForm');
+    const loadingModal = document.getElementById('loadingModal');
+
+    const latitudeInput = document.getElementById('id_latitude');
+    const longitudeInput = document.getElementById('id_longitude');
+    const locationInput = document.getElementById('id_location');
+    const locationStatus = document.getElementById('locationStatus');
+    const locationCoords = document.getElementById('locationCoords');
+    const locationMap = document.getElementById('locationMap');
+
+    let map = null;
+    let marker = null;
+
+    let stream = null;
+    let capturedBlob = null;
+
+    function renderMap(lat, lng) {
+    locationMap.classList.remove('hidden');
+
+    if (!map) {
+        map = L.map('locationMap').setView([lat, lng], 18);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 22,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        marker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('Detected submission location')
+            .openPopup();
+    } else {
+        map.setView([lat, lng], 18);
+
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+    }
+
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+}
+
+    // 📍 LOCATION
+    function captureLocation() {
+    if (!navigator.geolocation) {
+        locationStatus.textContent = 'Geolocation is not supported on this device.';
+        return;
+    }
+
+    locationStatus.textContent = 'Detecting current location...';
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude.toFixed(7);
+            const lng = position.coords.longitude.toFixed(7);
+
+            latitudeInput.value = lat;
+            longitudeInput.value = lng;
+            locationInput.value = `${lat}, ${lng}`;
+
+            locationStatus.textContent = 'Location captured successfully.';
+            locationCoords.textContent = `Latitude: ${lat} | Longitude: ${lng}`;
+            locationCoords.classList.remove('hidden');
+
+            renderMap(parseFloat(lat), parseFloat(lng));
+        },
+        function(error) {
+            locationStatus.textContent = 'Location access denied or unavailable. You can still continue, but no coordinates will be saved.';
+            console.error('Geolocation error:', error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+    // 🖼 IMAGE PREVIEW
+    imageInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+            previewPlaceholder.classList.add('hidden');
+        }
+    });
+
+    // 📷 CAMERA
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" }
+            });
+
+            video.srcObject = stream;
+            cameraModal.classList.remove('hidden');
+            cameraModal.classList.add('flex');
+
+        } catch (error) {
+            alert('Camera access failed');
+        }
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    }
+
+    openCameraBtn.addEventListener('click', startCamera);
+
+    closeCameraBtn.addEventListener('click', function () {
+        stopCamera();
+        cameraModal.classList.add('hidden');
+        cameraModal.classList.remove('flex');
+    });
+
+    // 📸 CAPTURE
+    captureBtn.addEventListener('click', function () {
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+
+        canvas.toBlob(blob => {
+            capturedBlob = blob;
+            capturedPreview.src = URL.createObjectURL(blob);
+            capturedPreview.classList.remove('hidden');
+            video.classList.add('hidden');
+
+            captureBtn.classList.add('hidden');
+            retakeBtn.classList.remove('hidden');
+            usePhotoBtn.classList.remove('hidden');
+        });
+    });
+
+    // 🔁 RETAKE
+    retakeBtn.addEventListener('click', function () {
+        capturedBlob = null;
+        capturedPreview.classList.add('hidden');
+        video.classList.remove('hidden');
+
+        captureBtn.classList.remove('hidden');
+        retakeBtn.classList.add('hidden');
+        usePhotoBtn.classList.add('hidden');
+    });
+
+    // ✅ USE PHOTO
+    usePhotoBtn.addEventListener('click', function () {
+        if (!capturedBlob) return;
+
+        const file = new File([capturedBlob], 'capture.jpg', { type: 'image/jpeg' });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        imageInput.files = dt.files;
+
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove('hidden');
+        previewPlaceholder.classList.add('hidden');
+
+        stopCamera();
+        cameraModal.classList.add('hidden');
+    });
+
+    // ⏳ LOADING
+    submissionForm.addEventListener('submit', function () {
+        loadingModal.classList.remove('hidden');
+        loadingModal.classList.add('flex');
+    });
+
+    window.addEventListener('beforeunload', stopCamera);
+    window.addEventListener('load', captureLocation);
+
+</script>
+{% endblock %}

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Buhara TeaNet{% endblock %}</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#83C441',
+                        darkgreen: '#003023',
+                        lightbg: '#F6FEF9',
+                        surface: '#FFFFFF',
+                        muted: '#6B7280',
+                        borderline: '#DCEFE3',
+                    },
+                    boxShadow: {
+                        soft: '0 4px 20px rgba(0, 48, 35, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-lightbg text-darkgreen min-h-screen">
+
+<div class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <!-- MOBILE OVERLAY -->
+<div id="sidebarOverlay"
+class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"
+onclick="closeSidebar()">
+</div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar"
+  class="fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 bg-darkgreen text-white flex flex-col shadow-soft transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="px-6 py-6 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-primary text-darkgreen flex items-center justify-center rounded-sm text-lg">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">Buhara TeaNet</h1>
+                    <p class="text-xs text-white/50 uppercase tracking-widest">Disease Detection</p>
+                </div>
+            </div>
+
+            <button type="button"
+                onclick="closeSidebar()"
+                class="md:hidden w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="px-6 py-4 border-b border-white/10">
+            <p class="text-xs uppercase tracking-widest text-white/40 mb-1">Signed in as</p>
+            <p class="font-medium text-sm">{{ user.username }}</p>
+            <p class="text-xs text-white/50 capitalize">{{ user.role }}</p>
+        </div>
+        {% endif %}
+
+        <nav class="flex-1 px-4 py-5 space-y-2 text-sm">
+
+            <a href="{% url 'dashboard' %}"
+               class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                <i class="fa-solid fa-house w-4 text-center"></i>
+                <span>Home</span>
+            </a>
+
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                    <i class="fa-solid fa-table-columns w-4 text-center"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                {% if user.role == 'worker' or user.role == 'manager' %}
+                    <a href="{% url 'submission_list' %}"
+                       class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                        <i class="fa-solid fa-folder-open w-4 text-center"></i>
+                        <span>My Submissions</span>
+                    </a>
+
+                    <a href="{% url 'submission_create' %}"
+                       class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                        <i class="fa-solid fa-cloud-arrow-up w-4 text-center"></i>
+                        <span>Upload</span>
+                    </a>
+                {% endif %}
+
+                {% if user.role == 'reviewer' %}
+                    <a href="{% url 'reviewer_submission_list' %}"
+                       class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                        <i class="fa-solid fa-clipboard-check w-4 text-center"></i>
+                        <span>Pending Reviews</span>
+                    </a>
+                {% endif %}
+
+                {% if user.role == 'admin' %}
+                    <a href="{% url 'admin_user_list' %}"
+                       class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                        <i class="fa-solid fa-users-gear w-4 text-center"></i>
+                        <span>Users</span>
+                    </a>
+                {% endif %}
+
+                {% if user.role == 'admin' or user.role == 'reviewer' %}
+                    <a href="{% url 'analytics_dashboard' %}"
+                       class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                        <i class="fa-solid fa-chart-column w-4 text-center"></i>
+                        <span>Analytics</span>
+                    </a>
+
+                    <a href="{% url 'analytics_report_pdf' %}"
+                       class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                        <i class="fa-solid fa-file-pdf w-4 text-center"></i>
+                        <span>Reports</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-white/10 transition">
+                    <i class="fa-solid fa-right-to-bracket w-4 text-center"></i>
+                    <span>Login</span>
+                </a>
+            {% endif %}
+        </nav>
+
+        {% if user.is_authenticated %}
+        <div class="p-4 border-t border-white/10">
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-red-600 transition px-4 py-3 rounded-md text-sm font-medium">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+        <!-- TOPBAR -->
+        <header class="bg-white border-b border-borderline px-4 md:px-8 py-4 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+                <button type="button"
+                        onclick="openSidebar()"
+                        class="md:hidden w-10 h-10 border border-borderline bg-lightbg flex items-center justify-center text-darkgreen">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            
+                <div>
+                    <h2 class="text-lg md:text-xl font-bold text-darkgreen">
+                        {% block page_title %}Buhara TeaNet{% endblock %}
+                    </h2>
+                    <p class="text-xs md:text-sm text-muted">
+                        Tea disease detection and management system
+                    </p>
+                </div>
+            </div>
+
+            {% if user.is_authenticated %}
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 bg-lightbg border border-borderline px-3 py-2 rounded-md text-sm">
+                    <i class="fa-solid fa-user text-primary"></i>
+                    <span class="font-medium">{{ user.username }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </header>
+
+        <!-- MOBILE NAV
+        <div class="md:hidden bg-darkgreen text-white px-4 py-3 border-b border-white/10">
+            <div class="flex flex-wrap gap-2 text-sm">
+                <a href="{% url 'dashboard' %}" class="px-3 py-2 bg-white/10 rounded">Home</a>
+
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="px-3 py-2 bg-white/10 rounded">Dashboard</a>
+
+                    {% if user.role == 'worker' or user.role == 'manager' %}
+                        <a href="{% url 'submission_list' %}" class="px-3 py-2 bg-white/10 rounded">Submissions</a>
+                        <a href="{% url 'submission_create' %}" class="px-3 py-2 bg-white/10 rounded">Upload</a>
+                    {% endif %}
+
+                    {% if user.role == 'reviewer' %}
+                        <a href="{% url 'reviewer_submission_list' %}" class="px-3 py-2 bg-white/10 rounded">Reviews</a>
+                    {% endif %}
+
+                    {% if user.role == 'admin' %}
+                        <a href="{% url 'admin_user_list' %}" class="px-3 py-2 bg-white/10 rounded">Users</a>
+                    {% endif %}
+
+                    {% if user.role == 'admin' or user.role == 'reviewer' %}
+                        <a href="{% url 'analytics_dashboard' %}" class="px-3 py-2 bg-white/10 rounded">Analytics</a>
+                        <a href="{% url 'analytics_report_pdf' %}" class="px-3 py-2 bg-white/10 rounded">Reports</a>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-2 bg-red-600 rounded">
+                            Logout
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="px-3 py-2 bg-white/10 rounded">Login</a>
+                {% endif %}
+            </div>
+        </div> -->
+
+        <!-- PAGE CONTENT -->
+        <main class="flex-1 px-4 md:px-8 py-6">
+            {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                        <div class="bg-white border-l-4 border-primary shadow-sm rounded-r-md px-4 py-3 text-sm">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+{% block scripts %}{% endblock %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    function openSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+
+        document.body.classList.remove('overflow-hidden');
+    }
+</script>
+</body>
+</html>

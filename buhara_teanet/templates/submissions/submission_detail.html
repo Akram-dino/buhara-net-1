@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Submission Detail | Buhara TeaNet{% endblock %}
+{% block page_title %}Submission Detail{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- PAGE HEADER -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Case Record</p>
+                <h2 class="text-2xl font-bold text-darkgreen">Submission CASE-{{ submission.id|stringformat:"04d" }}</h2>
+                <p class="text-sm text-muted mt-2">
+                    Uploaded on {{ submission.created_at|date:"M d, Y H:i" }}
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                {% if submission.status == 'pending_ai' %}
+                    <span class="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wide bg-amber-100 text-amber-700">
+                        <span class="w-2 h-2 bg-amber-500"></span>
+                        Pending AI Analysis
+                    </span>
+                {% elif submission.status == 'pending_review' %}
+                    <span class="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wide bg-blue-100 text-blue-700">
+                        <span class="w-2 h-2 bg-blue-500"></span>
+                        Pending Review
+                    </span>
+                {% elif submission.status == 'approved' %}
+                    <span class="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wide bg-green-100 text-green-700">
+                        <span class="w-2 h-2 bg-green-600"></span>
+                        Approved
+                    </span>
+                {% elif submission.status == 'reviewed' %}
+                    <span class="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wide bg-indigo-100 text-indigo-700">
+                        <span class="w-2 h-2 bg-indigo-500"></span>
+                        Reviewed
+                    </span>
+                {% elif submission.status == 'rejected' %}
+                    <span class="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wide bg-red-100 text-red-700">
+                        <span class="w-2 h-2 bg-red-500"></span>
+                        Rejected
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-wide bg-gray-100 text-gray-700">
+                        <span class="w-2 h-2 bg-gray-500"></span>
+                        {{ submission.get_status_display }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        <!-- LEFT COLUMN -->
+        <div class="xl:col-span-2 space-y-6">
+
+            <!-- IMAGE PANEL -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Uploaded Evidence</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Tea Leaf Image</h3>
+                </div>
+
+                <div class="p-6">
+                    {% if submission.image %}
+                        <div class="border border-borderline bg-lightbg overflow-hidden">
+                            <img src="{{ submission.image.url }}"
+                                 alt="Tea leaf image"
+                                 class="w-full max-h-[520px] object-contain bg-white">
+                        </div>
+                    {% else %}
+                        <div class="border border-borderline bg-lightbg p-10 text-center text-muted">
+                            <i class="fa-regular fa-image text-4xl mb-4"></i>
+                            <p class="text-sm">No image uploaded</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- AI RESULT -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">AI Output</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Diagnosis Result</h3>
+                </div>
+
+                <div class="p-6">
+                    {% if submission.detection_result %}
+                        <div class="space-y-6">
+
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="border border-borderline p-5 bg-lightbg">
+                                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Detected Disease</p>
+                                    <p class="text-2xl font-bold text-darkgreen">
+                                        {{ submission.detection_result.disease_name|default:"Not available" }}
+                                    </p>
+                                </div>
+
+                                {% if class_scores %}
+    <div class="border border-borderline p-5">
+        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Model Decision Basis</p>
+
+        <div class="space-y-4">
+            {% for item in class_scores %}
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-medium text-darkgreen">{{ item.name }}</span>
+                        <span class="text-muted">{{ item.confidence }}%</span>
+                    </div>
+
+                    <div class="w-full bg-gray-200 h-2 overflow-hidden">
+                        <div class="h-2 bg-primary transition-all duration-700"style="width: {{ item.confidence }}%;"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="border border-borderline p-5 bg-lightbg">
+        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Interpretation Note</p>
+        <p class="text-sm leading-7 text-darkgreen">
+            The AI model compared this image against the trained tea disease classes and selected
+            <span class="font-semibold">
+                {{ submission.detection_result.disease_name|default:"the top class" }}
+            </span>
+            because it had the highest confidence score among the predicted categories.
+            The percentages above show how strongly the model matched this image against the known disease classes.
+        </p>
+    </div>
+{% endif %}
+
+                                <div class="border border-borderline p-5 bg-lightbg">
+                                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Confidence Level</p>
+
+                                    {% if submission.detection_result.confidence is not None %}
+                                        <div class="space-y-3">
+                                            <div class="w-full bg-gray-200 h-3 overflow-hidden">
+                                                <div class="h-3 bg-primary transition-all duration-500"style="width: {{ submission.detection_result.confidence_percent }}%;">
+                                                </div>
+                                            </div>
+                                            <p class="text-xl font-bold text-darkgreen">
+                                                {{ submission.detection_result.confidence_percent }}%
+                                            </p>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-sm text-muted">Not available</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="border border-borderline p-5">
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Recommendation</p>
+                                <p class="text-sm leading-7 text-darkgreen">
+                                    {{ submission.detection_result.recommendation|default:"No recommendation provided" }}
+                                </p>
+                            </div>
+
+                        </div>
+                    {% else %}
+                        <div class="border border-borderline bg-lightbg p-8 text-center">
+                            <div class="w-14 h-14 mx-auto mb-4 border border-borderline bg-white flex items-center justify-center text-muted">
+                                <i class="fa-solid fa-robot text-xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-darkgreen mb-2">AI Result Not Yet Available</h4>
+                            <p class="text-sm text-muted">
+                                Image analysis has not yet been completed for this submission.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <aside class="space-y-6">
+
+            <!-- DETAILS PANEL -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submission Metadata</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Case Details</h3>
+                </div>
+
+                <div class="p-6 space-y-5 text-sm">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Submitted By</p>
+                        <p class="font-semibold text-darkgreen">{{ submission.submitted_by.username }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Location / Block</p>
+                        <p class="font-semibold text-darkgreen">{{ submission.location|default:"Not specified" }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Current Status</p>
+                        <p class="font-semibold text-darkgreen">{{ submission.get_status_display }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Notes / Observations</p>
+                        <p class="text-darkgreen leading-6">
+                            {{ submission.notes|default:"No notes provided" }}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ACTIONS PANEL -->
+            <section class="bg-white border border-borderline shadow-soft">
+                <div class="border-b border-borderline px-6 py-5">
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Record Actions</p>
+                    <h3 class="text-lg font-bold text-darkgreen">Available Options</h3>
+                </div>
+
+                <div class="p-6 flex flex-col gap-3">
+                    <a href="{% url 'submission_list' %}"
+                       class="inline-flex items-center justify-center gap-2 border border-borderline bg-white px-5 py-3 text-sm font-semibold uppercase tracking-wide text-darkgreen hover:border-primary transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back to My Submissions
+                    </a>
+
+                    <a href="{% url 'submission_report_pdf' submission.pk %}"
+                       class="inline-flex items-center justify-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        Download Report PDF
+                    </a>
+
+                    {% if submission.status != 'approved' and submission.status != 'reviewed' and submission.status != 'rejected' %}
+                        <a href="{% url 'submission_update' submission.pk %}"
+                           class="inline-flex items-center justify-center gap-2 border border-blue-500 text-blue-600 px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:bg-blue-500 hover:text-white transition">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            Edit Submission
+                        </a>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- WORKFLOW PANEL -->
+            <section class="bg-white border border-borderline shadow-soft p-6">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Workflow Insight</p>
+                <h3 class="text-lg font-bold text-darkgreen mb-5">Process Stage</h3>
+
+                <div class="space-y-4 text-sm">
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-primary text-darkgreen flex items-center justify-center font-bold shrink-0">1</span>
+                        <div>
+                            <p class="font-semibold">Submission Received</p>
+                            <p class="text-muted">Image and notes captured from the field.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-primary text-darkgreen flex items-center justify-center font-bold shrink-0">2</span>
+                        <div>
+                            <p class="font-semibold">AI Diagnosis</p>
+                            <p class="text-muted">The model predicts the likely disease and confidence score.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-8 h-8 bg-primary text-darkgreen flex items-center justify-center font-bold shrink-0">3</span>
+                        <div>
+                            <p class="font-semibold">Reviewer Validation</p>
+                            <p class="text-muted">Experts confirm or correct the AI result before final use.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+    </div>
+</div>
+{% endblock %}

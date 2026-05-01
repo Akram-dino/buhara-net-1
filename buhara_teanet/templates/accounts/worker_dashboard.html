@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Worker Dashboard | Buhara TeaNet{% endblock %}
+{% block page_title %}Worker Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Field Operations</p>
+                <h3 class="text-2xl font-bold text-darkgreen">Welcome, {{ request.user.username }}</h3>
+                <p class="text-sm text-muted mt-2 max-w-2xl">
+                    Capture tea leaf images, submit suspected cases, and monitor AI diagnosis and expert review progress.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'submission_create' %}"
+                   class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 font-semibold uppercase tracking-wide text-sm">
+                    <i class="fa-solid fa-camera"></i>
+                    New Submission
+                </a>
+                <a href="{% url 'submission_list' %}"
+                   class="inline-flex items-center gap-2 border border-borderline bg-white px-5 py-3 font-semibold uppercase tracking-wide text-sm text-darkgreen hover:border-primary">
+                    <i class="fa-solid fa-folder-open"></i>
+                    My Records
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Total Submissions</p>
+            <h3 class="text-3xl font-bold">{{ total_submissions|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Cases submitted so far</p>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending AI</p>
+            <h3 class="text-3xl font-bold text-amber-600">{{ pending_ai|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Awaiting AI analysis</p>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending Review</p>
+            <h3 class="text-3xl font-bold text-blue-600">{{ pending_review|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Awaiting expert validation</p>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-green-600"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Approved Cases</p>
+            <h3 class="text-3xl font-bold text-green-700">{{ approved|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Validated by reviewer</p>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 bg-white border border-borderline shadow-soft p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Quick Actions</p>
+                    <h4 class="text-lg font-bold">Field Workflow</h4>
+                </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+                <a href="{% url 'submission_create' %}" class="border border-borderline p-5 hover:border-primary transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-primary"></i>
+                        <i class="fa-solid fa-arrow-right text-muted"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">Upload New Case</h5>
+                    <p class="text-sm text-muted">Capture or upload a tea leaf image for AI diagnosis.</p>
+                </a>
+
+                <a href="{% url 'submission_list' %}" class="border border-borderline p-5 hover:border-primary transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fa-solid fa-list-check text-2xl text-primary"></i>
+                        <i class="fa-solid fa-arrow-right text-muted"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">Track Submission Status</h5>
+                    <p class="text-sm text-muted">See which cases are pending, reviewed, or approved.</p>
+                </a>
+
+                <div class="border border-borderline p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fa-solid fa-magnifying-glass-chart text-2xl text-primary"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">AI + Expert Workflow</h5>
+                    <p class="text-sm text-muted">Each case moves from AI detection to expert review for validation.</p>
+                </div>
+
+                <div class="border border-borderline p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fa-solid fa-file-lines text-2xl text-primary"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">Submission Reports</h5>
+                    <p class="text-sm text-muted">Generate PDF reports for submission records and diagnosis results.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-borderline shadow-soft p-6">
+            <div class="mb-5">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Status Guide</p>
+                <h4 class="text-lg font-bold">Workflow Meaning</h4>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                    <span class="w-3 h-3 bg-amber-500 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">Pending AI</p>
+                        <p class="text-muted">Image uploaded but analysis not yet completed.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                    <span class="w-3 h-3 bg-blue-500 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">Pending Review</p>
+                        <p class="text-muted">AI result is ready and awaiting expert confirmation.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                    <span class="w-3 h-3 bg-green-600 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">Approved</p>
+                        <p class="text-muted">Reviewer confirmed the diagnosis and recommendation.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                    <span class="w-3 h-3 bg-red-500 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">Rejected</p>
+                        <p class="text-muted">Reviewer rejected the case or diagnosis for correction.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

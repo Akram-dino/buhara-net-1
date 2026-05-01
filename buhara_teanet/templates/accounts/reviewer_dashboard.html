@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Reviewer Dashboard | Buhara TeaNet{% endblock %}
+{% block page_title %}Reviewer Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Expert Validation</p>
+                <h3 class="text-2xl font-bold text-darkgreen">Reviewer Control Panel</h3>
+                <p class="text-sm text-muted mt-2 max-w-2xl">
+                    Validate AI-generated disease diagnoses, provide expert notes, and approve final recommendations.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'reviewer_submission_list' %}"
+                   class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 font-semibold uppercase tracking-wide text-sm">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    Review Queue
+                </a>
+                <a href="{% url 'analytics_dashboard' %}"
+                   class="inline-flex items-center gap-2 border border-borderline bg-white px-5 py-3 font-semibold uppercase tracking-wide text-sm text-darkgreen hover:border-primary">
+                    <i class="fa-solid fa-chart-column"></i>
+                    Analytics
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending Reviews</p>
+            <h3 class="text-3xl font-bold text-blue-600">{{ total_pending_reviews|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Cases needing your action</p>
+        </div>
+    
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-green-600"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Approved Cases</p>
+            <h3 class="text-3xl font-bold text-green-700">{{ approved_today|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Confirmed AI decisions</p>
+        </div>
+    
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Corrected Cases</p>
+            <h3 class="text-3xl font-bold text-amber-600">{{ corrected_cases|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">AI outputs adjusted</p>
+        </div>
+    
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-red-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Rejected Cases</p>
+            <h3 class="text-3xl font-bold text-red-600">{{ rejected_cases|default:0 }}</h3>
+            <p class="text-sm text-muted mt-2">Cases requiring resubmission</p>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 bg-white border border-borderline shadow-soft p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Validation Tools</p>
+                    <h4 class="text-lg font-bold">Reviewer Actions</h4>
+                </div>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+                <a href="{% url 'reviewer_submission_list' %}" class="border border-borderline p-5 hover:border-primary transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fa-solid fa-list-check text-2xl text-primary"></i>
+                        <i class="fa-solid fa-arrow-right text-muted"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">Open Review Queue</h5>
+                    <p class="text-sm text-muted">Inspect AI results and validate pending cases.</p>
+                </a>
+
+                <a href="{% url 'analytics_dashboard' %}" class="border border-borderline p-5 hover:border-primary transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fa-solid fa-chart-line text-2xl text-primary"></i>
+                        <i class="fa-solid fa-arrow-right text-muted"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">View Disease Trends</h5>
+                    <p class="text-sm text-muted">Track common diseases and system performance.</p>
+                </a>
+
+                <div class="border border-borderline p-5">
+                    <div class="mb-4">
+                        <i class="fa-solid fa-stethoscope text-2xl text-primary"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">Expert Override</h5>
+                    <p class="text-sm text-muted">Correct AI diagnosis and publish final recommendations.</p>
+                </div>
+
+                <div class="border border-borderline p-5">
+                    <div class="mb-4">
+                        <i class="fa-solid fa-file-signature text-2xl text-primary"></i>
+                    </div>
+                    <h5 class="font-bold text-darkgreen mb-1">Case Documentation</h5>
+                    <p class="text-sm text-muted">Maintain expert notes and final validation records.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-borderline shadow-soft p-6">
+            <div class="mb-5">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Priority Guide</p>
+                <h4 class="text-lg font-bold">Review Focus</h4>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                    <span class="w-3 h-3 bg-red-500 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">High-Risk Cases</p>
+                        <p class="text-muted">Prioritize cases with severe symptoms or urgent field impact.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3 pb-4 border-b border-borderline">
+                    <span class="w-3 h-3 bg-amber-500 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">Low Confidence AI</p>
+                        <p class="text-muted">Carefully inspect cases where AI certainty is weak.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                    <span class="w-3 h-3 bg-blue-500 mt-1"></span>
+                    <div>
+                        <p class="font-semibold">Recommendation Review</p>
+                        <p class="text-muted">Ensure final advice is practical and agronomically accurate.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; }
+        h1, h2, h3 { color: #003023; }
+        .section { margin-bottom: 20px; }
+        .title { text-align: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 6px; }
+        th { background: #f0f0f0; }
+    </style>
+</head>
+
+<body>
+
+<div class="title">
+    <h1>Buhara TeaNet</h1>
+    <h3>Tea Disease Detection Report</h3>
+    <p>Date: {{ report_date }}</p>
+</div>
+
+<div class="section">
+    <h2>Executive Summary</h2>
+    <p>
+        This report summarizes disease detection activities captured within the system.
+        It highlights submission trends, AI analysis, and expert validation outcomes.
+    </p>
+</div>
+
+<div class="section">
+    <h2>Summary Statistics</h2>
+    <ul>
+        <li>Total Submissions: {{ total_submissions }}</li>
+        <li>Pending AI: {{ pending_ai }}</li>
+        <li>Pending Review: {{ pending_review }}</li>
+        <li>Approved: {{ approved }}</li>
+        <li>Rejected: {{ rejected }}</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>Disease Distribution</h2>
+    <table>
+        <tr>
+            <th>Disease</th>
+            <th>Count</th>
+        </tr>
+        {% for item in disease_distribution %}
+        <tr>
+            <td>{{ item.disease_name }}</td>
+            <td>{{ item.total }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="section">
+    <h2>Recent Submissions</h2>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+        {% for sub in recent_submissions %}
+        <tr>
+            <td>{{ sub.id }}</td>
+            <td>{{ sub.submitted_by.username }}</td>
+            <td>{{ sub.get_status_display }}</td>
+            <td>{{ sub.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="section">
+    <h2>AI Model Explanation</h2>
+    <p>
+        The AI model assigns probabilities across disease classes.
+        Predictions below 32% confidence are considered uncertain and require expert review.
+    </p>
+</div>
+
+</body>
+</html>

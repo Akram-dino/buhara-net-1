@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} | Buhara TeaNet{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- HEADER -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">User Configuration</p>
+                <h2 class="text-2xl font-bold text-darkgreen">{{ page_title }}</h2>
+                <p class="text-sm text-muted mt-2 max-w-xl">
+                    Configure account details, assign roles, and manage user access within the system.
+                </p>
+            </div>
+
+            <a href="{% url 'admin_user_list' %}"
+               class="inline-flex items-center gap-2 border border-borderline px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+            </a>
+        </div>
+    </section>
+
+    <!-- FORM -->
+    <section class="bg-white border border-borderline shadow-soft">
+        <div class="border-b border-borderline px-6 py-5">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">User Details</p>
+            <h3 class="text-lg font-bold text-darkgreen">Account Information</h3>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {% for field in form %}
+                    <div class="{% if field.name == 'password1' or field.name == 'password2' or field.name == 'expert_notes' %}md:col-span-2{% endif %}">
+                        <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2 font-semibold">
+                            {{ field.label }}
+                        </label>
+
+                        <div class="border border-borderline focus-within:border-primary transition">
+                            {{ field }}
+                        </div>
+
+                        {% if field.errors %}
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ field.errors|striptags }}
+                            </p>
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <p class="mt-2 text-xs text-muted">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="flex flex-wrap gap-3 pt-4 border-t border-borderline">
+
+                <button type="submit"
+                        class="inline-flex items-center gap-2 bg-primary text-darkgreen px-6 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                    <i class="fa-solid fa-check"></i>
+                    {{ submit_text }}
+                </button>
+
+                <a href="{% url 'admin_user_list' %}"
+                   class="inline-flex items-center gap-2 border border-borderline px-6 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                    <i class="fa-solid fa-xmark"></i>
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </section>
+
+</div>
+{% endblock %}

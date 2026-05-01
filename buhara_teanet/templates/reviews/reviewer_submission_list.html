@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Pending Reviews | Buhara TeaNet{% endblock %}
+{% block page_title %}Pending Reviews{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Expert Validation Queue</p>
+                <h2 class="text-2xl font-bold text-darkgreen">Pending Review Cases</h2>
+                <p class="text-sm text-muted mt-2 max-w-2xl">
+                    Review AI-analyzed submissions awaiting expert validation and final recommendation.
+                </p>
+            </div>
+
+            <div class="border border-borderline bg-lightbg px-5 py-3">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Queue Count</p>
+                <p class="text-2xl font-bold text-darkgreen">{{ submissions|length }}</p>
+            </div>
+        </div>
+    </section>
+
+    {% if submissions %}
+        <section class="bg-white border border-borderline shadow-soft">
+            <div class="border-b border-borderline px-6 py-5">
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Review List</p>
+                <h3 class="text-lg font-bold text-darkgreen">Cases Awaiting Validation</h3>
+            </div>
+
+            <div class="divide-y divide-borderline">
+                {% for submission in submissions %}
+                    <div class="p-6 hover:bg-lightbg transition">
+                        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+
+                            <div class="flex gap-4 min-w-0">
+                                <div class="w-24 h-24 border border-borderline bg-lightbg overflow-hidden shrink-0">
+                                    {% if submission.image %}
+                                        <img src="{{ submission.image.url }}"
+                                             alt="Submission image"
+                                             class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-muted">
+                                            <i class="fa-regular fa-image text-2xl"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-3 mb-2">
+                                        <h3 class="text-xl font-bold text-darkgreen">
+                                            Submission #{{ submission.id }}
+                                        </h3>
+
+                                        <span class="inline-flex items-center gap-2 px-3 py-1 text-xs uppercase tracking-wide bg-blue-100 text-blue-700">
+                                            <span class="w-2 h-2 bg-blue-500"></span>
+                                            Pending Review
+                                        </span>
+                                    </div>
+
+                                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 text-sm">
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Submitted By</p>
+                                            <p class="font-semibold text-darkgreen">{{ submission.submitted_by.username }}</p>
+                                        </div>
+
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Location</p>
+                                            <p class="font-semibold text-darkgreen">{{ submission.location|default:"Not specified" }}</p>
+                                        </div>
+
+                                        <div>
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Date</p>
+                                            <p class="font-semibold text-darkgreen">{{ submission.created_at|date:"M d, Y H:i" }}</p>
+                                        </div>
+                                    </div>
+
+                                    {% if submission.notes %}
+                                        <div class="mt-4">
+                                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-1">Worker Notes</p>
+                                            <p class="text-sm text-muted line-clamp-2">{{ submission.notes }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="xl:w-56">
+                                <a href="{% url 'reviewer_submission_detail' submission.pk %}"
+                                   class="w-full inline-flex items-center justify-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                                    <i class="fa-solid fa-clipboard-check"></i>
+                                    Review Case
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% else %}
+        <section class="bg-white border border-borderline shadow-soft p-10 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 border border-borderline bg-lightbg flex items-center justify-center text-muted">
+                <i class="fa-solid fa-check-double text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-darkgreen mb-2">No Pending Review Cases</h3>
+            <p class="text-sm text-muted">
+                There are no AI-analyzed submissions awaiting expert validation at the moment.
+            </p>
+        </section>
+    {% endif %}
+
+</div>
+{% endblock %}

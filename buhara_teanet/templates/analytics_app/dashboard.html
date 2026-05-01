@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard | Buhara TeaNet{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- HEADER -->
+    <section class="bg-white border border-borderline shadow-soft p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">System Insights</p>
+                <h2 class="text-2xl font-bold text-darkgreen">Analytics Dashboard</h2>
+                <p class="text-sm text-muted mt-2 max-w-2xl">
+                    Monitor submission activity, disease trends, review progress, and system performance.
+                </p>
+            </div>
+
+            <a href="{% url 'analytics_report_pdf' %}"
+               class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
+                <i class="fa-solid fa-file-pdf"></i>
+                Download Report
+            </a>
+        </div>
+    </section>
+
+    <!-- FILTERS -->
+    <section class="bg-white border border-borderline shadow-soft">
+        <div class="border-b border-borderline px-6 py-5">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Filter Analytics</p>
+            <h3 class="text-lg font-bold text-darkgreen">Refine Dashboard Data</h3>
+        </div>
+
+        <form method="get" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2">Start Date</label>
+                <input type="date" name="start_date" value="{{ start_date|default:'' }}"
+                       class="w-full border border-borderline px-4 py-3 text-sm focus:outline-none focus:border-primary">
+            </div>
+
+            <div>
+                <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2">End Date</label>
+                <input type="date" name="end_date" value="{{ end_date|default:'' }}"
+                       class="w-full border border-borderline px-4 py-3 text-sm focus:outline-none focus:border-primary">
+            </div>
+
+            <div>
+                <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2">Status</label>
+                <select name="status" class="w-full border border-borderline px-4 py-3 text-sm focus:outline-none focus:border-primary">
+                    <option value="">All Statuses</option>
+                    <option value="pending_ai" {% if status_filter == 'pending_ai' %}selected{% endif %}>Pending AI Analysis</option>
+                    <option value="pending_review" {% if status_filter == 'pending_review' %}selected{% endif %}>Pending Review</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="reviewed" {% if status_filter == 'reviewed' %}selected{% endif %}>Reviewed</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2">Disease</label>
+                <select name="disease_name" class="w-full border border-borderline px-4 py-3 text-sm focus:outline-none focus:border-primary">
+                    <option value="">All Diseases</option>
+                    {% for disease in available_diseases %}
+                        <option value="{{ disease }}" {% if disease_filter == disease %}selected{% endif %}>
+                            {{ disease }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                        class="w-full bg-primary text-darkgreen px-4 py-3 text-sm font-semibold uppercase tracking-wide">
+                    Apply
+                </button>
+                <a href="{% url 'analytics_dashboard' %}"
+                   class="w-full border border-borderline px-4 py-3 text-center text-sm font-semibold uppercase tracking-wide hover:border-primary">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </section>
+
+    <!-- ACTIVE FILTERS -->
+    {% if start_date or end_date or status_filter or disease_filter %}
+        <section class="bg-lightbg border border-borderline p-5">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Active Filters</p>
+            <div class="flex flex-wrap gap-2 text-sm">
+                {% if start_date %}<span class="bg-white border border-borderline px-3 py-2">Start: {{ start_date }}</span>{% endif %}
+                {% if end_date %}<span class="bg-white border border-borderline px-3 py-2">End: {{ end_date }}</span>{% endif %}
+                {% if status_filter %}<span class="bg-white border border-borderline px-3 py-2">Status: {{ status_filter }}</span>{% endif %}
+                {% if disease_filter %}<span class="bg-white border border-borderline px-3 py-2">Disease: {{ disease_filter }}</span>{% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+    <!-- SUMMARY CARDS -->
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Total</p>
+            <h3 class="text-3xl font-bold">{{ total_submissions }}</h3>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending AI</p>
+            <h3 class="text-3xl font-bold text-amber-600">{{ pending_ai }}</h3>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-blue-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Pending Review</p>
+            <h3 class="text-3xl font-bold text-blue-600">{{ pending_review }}</h3>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-green-600"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Approved</p>
+            <h3 class="text-3xl font-bold text-green-700">{{ approved }}</h3>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-indigo-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Reviewed</p>
+            <h3 class="text-3xl font-bold text-indigo-600">{{ reviewed }}</h3>
+        </div>
+
+        <div class="bg-white border border-borderline p-5 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-red-500"></div>
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Rejected</p>
+            <h3 class="text-3xl font-bold text-red-600">{{ rejected }}</h3>
+        </div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="bg-white border border-borderline shadow-soft p-6">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Disease Trends</p>
+            <h3 class="text-lg font-bold text-darkgreen mb-5">Disease Distribution</h3>
+            <canvas id="diseaseChart"></canvas>
+        </div>
+
+        <div class="bg-white border border-borderline shadow-soft p-6">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Workflow Status</p>
+            <h3 class="text-lg font-bold text-darkgreen mb-5">Submission Status Distribution</h3>
+            <canvas id="statusChart"></canvas>
+        </div>
+    </section>
+
+    <!-- TABLE SUMMARIES -->
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="bg-white border border-borderline shadow-soft p-6">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Detected Diseases</p>
+            <h3 class="text-lg font-bold text-darkgreen mb-5">Most Common Diseases</h3>
+
+            {% if disease_distribution %}
+                <div class="space-y-3">
+                    {% for item in disease_distribution %}
+                        <div class="flex items-center justify-between border-b border-borderline pb-3">
+                            <span class="font-medium">{{ item.disease_name|default:"Unknown" }}</span>
+                            <span class="text-sm bg-primary text-darkgreen px-3 py-1 font-semibold">{{ item.total }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-muted">No detection results available yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white border border-borderline shadow-soft p-6">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Status Summary</p>
+            <h3 class="text-lg font-bold text-darkgreen mb-5">Submission Status Summary</h3>
+
+            {% if status_distribution %}
+                <div class="space-y-3">
+                    {% for item in status_distribution %}
+                        <div class="flex items-center justify-between border-b border-borderline pb-3">
+                            <span class="font-medium">{{ item.label }}</span>
+                            <span class="text-sm bg-darkgreen text-white px-3 py-1 font-semibold">{{ item.value }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-muted">No submissions available yet.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- RECENT SUBMISSIONS -->
+    <section class="bg-white border border-borderline shadow-soft">
+        <div class="border-b border-borderline px-6 py-5">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Recent Records</p>
+            <h3 class="text-lg font-bold text-darkgreen">Recent Submissions</h3>
+        </div>
+
+        {% if recent_submissions %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-lightbg border-b border-borderline">
+                        <tr class="text-left">
+                            <th class="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted">ID</th>
+                            <th class="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted">Submitted By</th>
+                            <th class="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted">Location</th>
+                            <th class="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted">Status</th>
+                            <th class="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted">Date</th>
+                            <th class="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-borderline">
+                        {% for submission in recent_submissions %}
+                            <tr class="hover:bg-lightbg transition">
+                                <td class="px-6 py-4 font-semibold">CASE-{{ submission.id|stringformat:"04d" }}</td>
+                                <td class="px-6 py-4">{{ submission.submitted_by.username }}</td>
+                                <td class="px-6 py-4">{{ submission.location|default:"Not specified" }}</td>
+                                <td class="px-6 py-4">{{ submission.get_status_display }}</td>
+                                <td class="px-6 py-4">{{ submission.created_at|date:"M d, Y H:i" }}</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex gap-2">
+                                        <a href="{% url 'submission_detail' submission.pk %}"
+                                           class="inline-flex items-center gap-2 border border-primary text-primary px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-primary hover:text-darkgreen transition">
+                                            <i class="fa-solid fa-eye"></i>
+                                            View
+                                        </a>
+
+                                        <button type="button"
+                                                class="inline-flex items-center gap-2 border border-red-500 text-red-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-red-500 hover:text-white transition"
+                                                data-delete-url="{% url 'submission_delete' submission.pk %}"
+                                                data-label="Submission #{{ submission.id }}"
+                                                onclick="openDeleteModal(this.dataset.deleteUrl, this.dataset.label)">
+                                            <i class="fa-solid fa-trash"></i>
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-10 text-center">
+                <i class="fa-regular fa-folder-open text-3xl text-muted mb-3"></i>
+                <p class="text-sm text-muted">No recent submissions found.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[9999] p-4">
+    <div class="bg-white border border-borderline shadow-soft w-full max-w-md">
+        <div class="bg-darkgreen text-white px-6 py-4 flex justify-between items-center">
+            <h3 class="text-lg font-bold">Delete Submission</h3>
+            <button type="button" onclick="closeDeleteModal()" class="text-white/70 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="deleteForm" method="post" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" name="next" id="deleteNext" value="{{ request.get_full_path }}">
+
+            <p class="text-sm text-muted mb-6">
+                Are you sure you want to delete
+                <span id="deleteSubmissionLabel" class="font-semibold text-darkgreen"></span>?
+            </p>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeDeleteModal()"
+                        class="border border-borderline px-5 py-3 text-sm font-semibold uppercase tracking-wide">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="bg-red-600 text-white px-5 py-3 text-sm font-semibold uppercase tracking-wide">
+                    Delete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{{ disease_labels|json_script:"disease-labels" }}
+{{ disease_values|json_script:"disease-values" }}
+{{ status_labels|json_script:"status-labels" }}
+{{ status_values|json_script:"status-values" }}
+
+<script>
+    const diseaseLabels = JSON.parse(document.getElementById('disease-labels').textContent);
+    const diseaseValues = JSON.parse(document.getElementById('disease-values').textContent);
+    const statusLabels = JSON.parse(document.getElementById('status-labels').textContent);
+    const statusValues = JSON.parse(document.getElementById('status-values').textContent);
+
+    new Chart(document.getElementById('diseaseChart'), {
+        type: 'bar',
+        data: {
+            labels: diseaseLabels,
+            datasets: [{
+                label: 'Detected Cases',
+                data: diseaseValues,
+                backgroundColor: '#83C441'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                label: 'Submission Status',
+                data: statusValues,
+                backgroundColor: ['#facc15', '#3b82f6', '#22c55e', '#6366f1', '#ef4444']
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    function openDeleteModal(deleteUrl, label) {
+        const modal = document.getElementById('deleteModal');
+        document.getElementById('deleteForm').action = deleteUrl;
+        document.getElementById('deleteSubmissionLabel').textContent = label;
+        document.getElementById('deleteNext').value = window.location.pathname + window.location.search;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    window.addEventListener('click', function (e) {
+        const modal = document.getElementById('deleteModal');
+        if (e.target === modal) closeDeleteModal();
+    });
+</script>
+{% endblock %}
