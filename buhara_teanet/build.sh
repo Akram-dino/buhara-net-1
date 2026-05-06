@@ -5,29 +5,24 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
-
 python manage.py shell -c "
-from accounts.models import User;
+from accounts.models import User
 
-if not User.objects.filter(username='admin1').exists():
-    User.objects.create_superuser(
-        username='admin',
-        email='admin@buhara.com',
-        password='buhara2026'
-        role='admin'
-    );
+admin, created = User.objects.get_or_create(username='admin1')
+admin.email = 'admin@test.com'
+admin.role = 'admin'
+admin.is_staff = True
+admin.is_superuser = True
+admin.set_password('buhara2026')
+admin.save()
 
-if not User.objects.filter(username='worker1').exists():
-    User.objects.create_user(
-        username='worker1',
-        password='Worker12345',
-        role='worker'
-    );
+worker, created = User.objects.get_or_create(username='worker1')
+worker.role = 'worker'
+worker.set_password('worker2026')
+worker.save()
 
-if not User.objects.filter(username='reviewer1').exists():
-    User.objects.create_user(
-        username='reviewer1',
-        password='Reviewer12345',
-        role='reviewer'
-    );
+reviewer, created = User.objects.get_or_create(username='reviewer1')
+reviewer.role = 'reviewer'
+reviewer.set_password('reviewer2026')
+reviewer.save()
 "
