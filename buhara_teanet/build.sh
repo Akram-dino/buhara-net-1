@@ -11,9 +11,10 @@ from accounts.models import User;
 
 if not User.objects.filter(username='admin1').exists():
     User.objects.create_superuser(
-        username='admin1',
+        username='admin',
         email='admin@test.com',
         password='Admin12345'
+        role='admin'
     );
 
 if not User.objects.filter(username='worker1').exists():
