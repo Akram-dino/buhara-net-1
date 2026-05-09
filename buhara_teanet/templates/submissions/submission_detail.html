@@ -83,97 +83,187 @@
             </section>
 
             <!-- AI RESULT -->
-            <section class="bg-white border border-borderline shadow-soft">
-                <div class="border-b border-borderline px-6 py-5">
-                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">AI Output</p>
-                    <h3 class="text-lg font-bold text-darkgreen">Diagnosis Result</h3>
-                </div>
-
-                <div class="p-6">
-                    {% if submission.detection_result %}
-                        <div class="space-y-6">
-
-                            <div class="grid md:grid-cols-2 gap-6">
-                                <div class="border border-borderline p-5 bg-lightbg">
-                                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Detected Disease</p>
-                                    <p class="text-2xl font-bold text-darkgreen">
-                                        {{ submission.detection_result.disease_name|default:"Not available" }}
-                                    </p>
-                                </div>
-
-                                {% if class_scores %}
-    <div class="border border-borderline p-5">
-        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Model Decision Basis</p>
-
-        <div class="space-y-4">
-            {% for item in class_scores %}
-                <div>
-                    <div class="flex justify-between text-sm mb-2">
-                        <span class="font-medium text-darkgreen">{{ item.name }}</span>
-                        <span class="text-muted">{{ item.confidence }}%</span>
-                    </div>
-
-                    <div class="w-full bg-gray-200 h-2 overflow-hidden">
-                        <div class="h-2 bg-primary transition-all duration-700"style="width: {{ item.confidence }}%;"></div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+           <!-- AI RESULT -->
+<section class="bg-white border border-borderline shadow-soft">
+    <div class="border-b border-borderline px-6 py-5">
+        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">AI Output</p>
+        <h3 class="text-lg font-bold text-darkgreen">Diagnosis Result</h3>
     </div>
 
-    <div class="border border-borderline p-5 bg-lightbg">
-        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Interpretation Note</p>
-        <p class="text-sm leading-7 text-darkgreen">
-            The AI model compared this image against the trained tea disease classes and selected
-            <span class="font-semibold">
-                {{ submission.detection_result.disease_name|default:"the top class" }}
-            </span>
-            because it had the highest confidence score among the predicted categories.
-            The percentages above show how strongly the model matched this image against the known disease classes.
-        </p>
-    </div>
-{% endif %}
+    <div class="p-6">
+        {% if submission.detection_result %}
 
-                                <div class="border border-borderline p-5 bg-lightbg">
-                                    <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Confidence Level</p>
+            {% with disease=submission.detection_result.disease_name %}
+            {% if disease == "Invalid / Unclear Image" %}
 
-                                    {% if submission.detection_result.confidence is not None %}
-                                        <div class="space-y-3">
-                                            <div class="w-full bg-gray-200 h-3 overflow-hidden">
-                                                <div class="h-3 bg-primary transition-all duration-500"style="width: {{ submission.detection_result.confidence_percent }}%;">
-                                                </div>
-                                            </div>
-                                            <p class="text-xl font-bold text-darkgreen">
-                                                {{ submission.detection_result.confidence_percent }}%
-                                            </p>
-                                        </div>
-                                    {% else %}
-                                        <p class="text-sm text-muted">Not available</p>
-                                    {% endif %}
+                <!-- INVALID / UNCLEAR IMAGE RESULT -->
+                <div class="space-y-6">
+
+                    <div class="border border-amber-300 bg-amber-50 p-6">
+                        <p class="text-xs uppercase tracking-[0.2em] text-amber-700 mb-2">
+                            Image Quality Check
+                        </p>
+                        <h3 class="text-2xl font-bold text-amber-700">
+                            Image Not Suitable for Diagnosis
+                        </h3>
+                        <p class="text-sm text-amber-800 mt-3 leading-7">
+                            The uploaded image does not provide enough visual evidence for the system
+                            to make a reliable tea disease diagnosis.
+                        </p>
+                    </div>
+
+                    {% if class_scores %}
+                    <div class="border border-borderline p-5 bg-white">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                            Image Matching Summary
+                        </p>
+
+                        <div class="space-y-4">
+                            {% for item in class_scores %}
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="font-medium text-darkgreen">{{ item.name }}</span>
+                                        <span class="text-muted">{{ item.confidence }}%</span>
+                                    </div>
+
+                                    <div class="w-full bg-gray-200 h-2 overflow-hidden">
+                                        <div class="h-2 bg-amber-500 transition-all duration-700"style="width: {{ item.confidence }}%;"></div>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div class="border border-borderline p-5">
-                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">Recommendation</p>
-                                <p class="text-sm leading-7 text-darkgreen">
-                                    {{ submission.detection_result.recommendation|default:"No recommendation provided" }}
-                                </p>
-                            </div>
-
+                            {% endfor %}
                         </div>
-                    {% else %}
-                        <div class="border border-borderline bg-lightbg p-8 text-center">
-                            <div class="w-14 h-14 mx-auto mb-4 border border-borderline bg-white flex items-center justify-center text-muted">
-                                <i class="fa-solid fa-robot text-xl"></i>
-                            </div>
-                            <h4 class="text-lg font-bold text-darkgreen mb-2">AI Result Not Yet Available</h4>
-                            <p class="text-sm text-muted">
-                                Image analysis has not yet been completed for this submission.
+
+                        <p class="text-xs text-muted leading-6 mt-4">
+                            These values show possible visual similarities, but the image was not strong
+                            enough for the system to confirm a disease diagnosis.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="border border-borderline p-5 bg-lightbg">
+                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                                Interpretation Note
+                            </p>
+                            <p class="text-sm leading-7 text-darkgreen">
+                                The system reviewed the uploaded image against known tea disease patterns,
+                                but the image did not provide a strong enough match for reliable diagnosis.
+                                This case should therefore be resubmitted with a clearer tea leaf image or
+                                checked by an expert.
                             </p>
                         </div>
-                    {% endif %}
+
+                        <div class="border border-borderline p-5 bg-lightbg">
+                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                                Recommendation
+                            </p>
+                            <p class="text-sm leading-7 text-darkgreen">
+                                Please upload a clear close-up image of a tea leaf. The image should be
+                                well-lit and should show visible symptoms such as spots, drying, yellowing,
+                                curling, or pest damage.
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
-            </section>
+
+            {% else %}
+
+                <!-- VALID DISEASE RESULT -->
+                <div class="space-y-6">
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="border border-borderline p-5 bg-lightbg">
+                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">
+                                Detected Disease
+                            </p>
+                            <p class="text-2xl font-bold text-darkgreen">
+                                {{ disease|default:"Not available" }}
+                            </p>
+                        </div>
+
+                        <div class="border border-borderline p-5 bg-lightbg">
+                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">
+                                Confidence Level
+                            </p>
+
+                            {% if submission.detection_result.confidence is not None %}
+                                <div class="space-y-3">
+                                    <div class="w-full bg-gray-200 h-3 overflow-hidden">
+                                        <div class="h-3 bg-primary transition-all duration-500"style="width: {{ submission.detection_result.confidence_percent }}%;">
+                                        </div>
+                                    </div>
+                                    <p class="text-xl font-bold text-darkgreen">
+                                        {{ submission.detection_result.confidence_percent }}%
+                                    </p>
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-muted">Not available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if class_scores %}
+                    <div class="border border-borderline p-5">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                            Model Decision Basis
+                        </p>
+
+                        <div class="space-y-4">
+                            {% for item in class_scores %}
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="font-medium text-darkgreen">{{ item.name }}</span>
+                                        <span class="text-muted">{{ item.confidence }}%</span>
+                                    </div>
+
+                                    <div class="w-full bg-gray-200 h-2 overflow-hidden">
+                                        <div class="h-2 bg-primary transition-all duration-700"style="width:{{ item.confidence }}%;"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="border border-borderline p-5 bg-lightbg">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                            Interpretation Note
+                        </p>
+                        <p class="text-sm leading-7 text-darkgreen">
+                            The AI model compared this image against trained tea disease classes and selected
+                            <span class="font-semibold">{{ disease|default:"the top class" }}</span>
+                            as the most likely match based on the uploaded leaf image.
+                        </p>
+                    </div>
+
+                    <div class="border border-borderline p-5">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                            Recommendation
+                        </p>
+                        <p class="text-sm leading-7 text-darkgreen">
+                            {{ submission.detection_result.recommendation|default:"No recommendation provided" }}
+                        </p>
+                    </div>
+
+                </div>
+
+            {% endif %}
+            {% endwith %}
+
+        {% else %}
+            <div class="border border-borderline bg-lightbg p-8 text-center">
+                <div class="w-14 h-14 mx-auto mb-4 border border-borderline bg-white flex items-center justify-center text-muted">
+                    <i class="fa-solid fa-robot text-xl"></i>
+                </div>
+                <h4 class="text-lg font-bold text-darkgreen mb-2">AI Result Not Yet Available</h4>
+                <p class="text-sm text-muted">
+                    Image analysis has not yet been completed for this submission.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</section>
         </div>
 
         <!-- RIGHT COLUMN -->

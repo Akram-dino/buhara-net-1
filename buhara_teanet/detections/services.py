@@ -24,44 +24,44 @@ def generate_recommendation(disease_name: str) -> str:
     )
 
 
+MIN_CONFIDENCE_THRESHOLD = 0.40  # 40%
+
+
 def parse_roboflow_prediction(data: dict) -> dict:
     predictions = data.get("predictions", {})
 
-    if isinstance(predictions, dict) and predictions:
-        best_class = None
-        best_confidence = -1
+    best_class = None
+    best_confidence = None
 
+    if isinstance(predictions, dict) and predictions:
         for class_name, class_data in predictions.items():
             if isinstance(class_data, dict):
                 confidence = class_data.get("confidence", 0)
-                if confidence > best_confidence:
+
+                if best_confidence is None or confidence > best_confidence:
                     best_confidence = confidence
                     best_class = class_name
 
+    if best_class is None:
         return {
-            "disease_name": best_class if best_class else "Unknown",
-            "confidence": best_confidence if best_confidence >= 0 else None,
+            "disease_name": "Invalid / Unclear Image",
+            "confidence": None,
+            "is_valid_prediction": False,
         }
 
-    predicted_classes = data.get("predicted_classes", [])
-    if predicted_classes:
-        disease_name = predicted_classes[0]
-        confidence = None
-
-        if isinstance(predictions, dict) and disease_name in predictions:
-            class_info = predictions[disease_name]
-            if isinstance(class_info, dict):
-                confidence = class_info.get("confidence")
-
+    if best_confidence is None or best_confidence < MIN_CONFIDENCE_THRESHOLD:
         return {
-            "disease_name": disease_name,
-            "confidence": confidence,
+            "disease_name": "Invalid / Unclear Image",
+            "confidence": best_confidence,
+            "is_valid_prediction": False,
         }
 
     return {
-        "disease_name": "No disease detected",
-        "confidence": None,
+        "disease_name": best_class,
+        "confidence": best_confidence,
+        "is_valid_prediction": True,
     }
+
 
 
 def analyze_image_with_roboflow(image_path: str) -> dict:
@@ -85,9 +85,18 @@ def analyze_image_with_roboflow(image_path: str) -> dict:
 
     parsed = parse_roboflow_prediction(data)
 
+    if not parsed.get("is_valid_prediction"):
+        recommendation = (
+            "The uploaded image does not appear to be a clear tea leaf disease sample. "
+            "Please upload a clear image of a tea leaf for reliable diagnosis."
+        )
+    else:
+        recommendation = generate_recommendation(parsed.get("disease_name"))
+
     return {
         "disease_name": parsed.get("disease_name"),
         "confidence": parsed.get("confidence"),
-        "recommendation": generate_recommendation(parsed.get("disease_name")),
+        "recommendation": recommendation,
         "raw_response": data,
+        "is_valid_prediction": parsed.get("is_valid_prediction"),
     }

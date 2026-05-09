@@ -7,6 +7,7 @@ from detections.models import DetectionResult
 from detections.services import analyze_image_with_roboflow
 from .forms import SubmissionForm
 from .models import Submission
+from django.db.models import Q
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -81,9 +82,44 @@ def submission_create_view(request):
 
 @login_required
 @role_required(['worker', 'manager'])
+# def submission_list_view(request):
+#     submissions = Submission.objects.filter(submitted_by=request.user).order_by('-created_at')
+#     return render(request, 'submissions/submission_list.html', {'submissions': submissions})
+# @login_required
 def submission_list_view(request):
-    submissions = Submission.objects.filter(submitted_by=request.user).order_by('-created_at')
-    return render(request, 'submissions/submission_list.html', {'submissions': submissions})
+    submissions = Submission.objects.filter(submitted_by=request.user)
+
+    search_query = request.GET.get('q', '')
+    status_filter = request.GET.get('status', '')
+
+    if search_query:
+        submissions = submissions.filter(
+            Q(location__icontains=search_query) |
+            Q(notes__icontains=search_query) |
+            Q(id__icontains=search_query)
+        )
+
+    if status_filter:
+        submissions = submissions.filter(status=status_filter)
+
+    submissions = submissions.order_by('-created_at')
+
+    total_records = submissions.count()
+    pending_ai = submissions.filter(status='pending_ai').count()
+    pending_review = submissions.filter(status='pending_review').count()
+    approved = submissions.filter(status='approved').count()
+
+    context = {
+        'submissions': submissions,
+        'total_records': total_records,
+        'pending_ai': pending_ai,
+        'pending_review': pending_review,
+        'approved': approved,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    }
+
+    return render(request, 'submissions/submission_list.html', context)
 
 
 @login_required

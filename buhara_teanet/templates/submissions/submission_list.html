@@ -19,13 +19,82 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
+
+                <a href="{% url 'worker_period_report_pdf' 'daily' %}"
+                   class="inline-flex items-center gap-2 border border-borderline text-darkgreen px-4 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    Daily Report
+                </a>
+            
+                <a href="{% url 'worker_period_report_pdf' 'weekly' %}"
+                   class="inline-flex items-center gap-2 border border-borderline text-darkgreen px-4 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                    <i class="fa-solid fa-calendar-week"></i>
+                    Weekly Report
+                </a>
+            
+                <a href="{% url 'worker_period_report_pdf' 'monthly' %}"
+                   class="inline-flex items-center gap-2 border border-borderline text-darkgreen px-4 py-3 text-sm font-semibold uppercase tracking-wide hover:border-primary transition">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Monthly Report
+                </a>
+            
                 <a href="{% url 'submission_create' %}"
                    class="inline-flex items-center gap-2 bg-primary text-darkgreen px-5 py-3 text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition">
                     <i class="fa-solid fa-plus"></i>
                     New Submission
                 </a>
+            
             </div>
         </div>
+    </section>
+
+    <section class="bg-white border border-borderline shadow-soft">
+        <div class="border-b border-borderline px-6 py-5">
+            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Filter Records</p>
+            <h3 class="text-lg font-bold text-darkgreen">Search My Submissions</h3>
+        </div>
+    
+        <form method="get" class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2">Search</label>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="Search by case ID, location, or notes"
+                    class="w-full border border-borderline px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                >
+            </div>
+    
+            <div>
+                <label class="block text-xs uppercase tracking-[0.2em] text-muted mb-2">Status</label>
+                <select
+                    name="status"
+                    class="w-full border border-borderline px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                >
+                    <option value="">All Statuses</option>
+                    <option value="pending_ai" {% if status_filter == 'pending_ai' %}selected{% endif %}>Pending AI</option>
+                    <option value="pending_review" {% if status_filter == 'pending_review' %}selected{% endif %}>Pending Review</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="reviewed" {% if status_filter == 'reviewed' %}selected{% endif %}>Reviewed</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+    
+            <div class="flex items-end gap-2">
+                <button
+                    type="submit"
+                    class="w-full bg-primary text-darkgreen px-4 py-3 text-sm font-semibold uppercase tracking-wide">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>
+                    Search
+                </button>
+    
+                <a href="{% url 'submission_list' %}"
+                   class="w-full border border-borderline px-4 py-3 text-center text-sm font-semibold uppercase tracking-wide hover:border-primary">
+                    Reset
+                </a>
+            </div>
+        </form>
     </section>
 
     <!-- QUICK SUMMARY -->
