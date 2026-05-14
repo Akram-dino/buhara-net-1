@@ -112,13 +112,13 @@
                         </p>
                     </div>
 
-                    {% if class_scores %}
-                    <div class="border border-borderline p-5 bg-white">
-                        <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
+                                    {% if class_scores and disease != "Invalid / Unclear Image" %}
+                            <div class="border border-borderline p-5 bg-white">
+                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-3">
                             Image Matching Summary
-                        </p>
+                            </p>
 
-                        <div class="space-y-4">
+                            <div class="space-y-4">
                             {% for item in class_scores %}
                                 <div>
                                     <div class="flex justify-between text-sm mb-2">
@@ -127,18 +127,19 @@
                                     </div>
 
                                     <div class="w-full bg-gray-200 h-2 overflow-hidden">
-                                        <div class="h-2 bg-amber-500 transition-all duration-700"style="width: {{ item.confidence }}%;"></div>
+                                        <div class="h-2 bg-amber-500 transition-all duration-700"style="width: {{ item.confidence }}%;">
+                                        </div>
                                     </div>
                                 </div>
                             {% endfor %}
-                        </div>
+                            </div>
 
-                        <p class="text-xs text-muted leading-6 mt-4">
+                            <p class="text-xs text-muted leading-6 mt-4">
                             These values show possible visual similarities, but the image was not strong
                             enough for the system to confirm a disease diagnosis.
-                        </p>
-                    </div>
-                    {% endif %}
+                            </p>
+                            </div>
+                            {% endif %}
 
                     <div class="grid md:grid-cols-2 gap-6">
                         <div class="border border-borderline p-5 bg-lightbg">
@@ -174,9 +175,17 @@
 
                     <div class="grid md:grid-cols-2 gap-6">
                         <div class="border border-borderline p-5 bg-lightbg">
-                            <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">
-                                Detected Disease
-                            </p>
+
+                            {% if disease|lower == "healthy" %}
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Leaf Condition</p>
+                        
+                            {% elif disease == "Invalid / Unclear Image" %}
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Image Assessment</p>
+                        
+                            {% else %}
+                                <p class="text-xs uppercase tracking-[0.2em] text-muted mb-2">Detected Disease</p>
+                            {% endif %}
+                        
                             <p class="text-2xl font-bold text-darkgreen">
                                 {{ disease|default:"Not available" }}
                             </p>

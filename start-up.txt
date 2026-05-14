@@ -27,3 +27,64 @@ pwd:buhara2026
 
 
 postgresql://buhara_teanet_db_user:3LofjY7cAIWtYkQPFk5wt54Vn3el62je@dpg-d7q8131j2pic73fif0sg-a/buhara_teanet_db
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Apis
+opt2
+api_key="VbOIq05Jx3Auu2oax1od"
+model_id="tea-disease-4b5uq/1"
+api_url="https://serverless.roboflow.com",
+
+opt3
+api_key= "VbOIq05Jx3Auu2oax1od"
+model_id= "tea-disease-zfekj/1"
+
+current opt
+api_key = "I4Cgw4EMQdi2yf9hGcCE"
+model_id = "tea-7vpyp/1"
+
+
+
+
+best
+ROBOFLOW_API_KEY="VbOIq05Jx3Auu2oax1od"
+ROBOFLOW_MODEL_ID="tea-leaves-sm0rw/1"
+ROBOFLOW_CONFIDENCE_THRESHOLD = 0.6
